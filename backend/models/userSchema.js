@@ -21,11 +21,6 @@ const userSchema = new Schema({
             match: /^(http|https):\/\/[^ "]+$/ // Basic URL validation
         },
     },
-    password: {
-        type: String,
-        required: true,
-        minlength: 6 // Minimum password length
-    },
     balance: {
         type: Number,
         required: true,
@@ -36,7 +31,7 @@ const userSchema = new Schema({
             type: String,
             required: true,
             enum: ['USD', 'EUR', 'GBP', 'INR', 'JPY', 'AUD', 'CAD', 'Other'], // Example currencies
-            default: 'USD' // Default currency
+            default: 'INR' // Default currency
         },
         displayMode: {
             type: String,

@@ -1,6 +1,6 @@
-const express = require('express');
-const Transaction = require('../models/Transaction');
-const router = express.Router();
+import { Router } from 'express';
+import { transaction as Transaction } from '../models/transactionSchema.js';
+const router = Router();
 
 // Add a transaction
 router.post('/addTransaction', async (req, res) => {
@@ -46,4 +46,4 @@ router.post('/stats/filter', async (req, res) => {
     res.json({ totalTransactions: filteredTransactions.length, totalAmount });
 });
 
-module.exports = router;
+export default router;
