@@ -2,7 +2,7 @@ import { Schema, model } from 'mongoose';
 
 // Define the transaction schema
 const transactionSchema = new Schema({
-    userId: {
+    user: {
         type: Schema.Types.ObjectId,
         required: true,
         ref: 'User ' // Assuming you have a User model
@@ -31,9 +31,6 @@ const transactionSchema = new Schema({
         type: String,
         enum: ["credit", "debit"]
     },
-    account: {
-        type: String
-    },
     createdAt: {
         type: Date,
         default: Date.now // Automatically set the creation date
@@ -45,7 +42,4 @@ const transactionSchema = new Schema({
 });
 
 // Create the Transaction model
-const Transaction = model('Transaction', transactionSchema);
-
-// Export the model (if needed)
-export default Transaction;
+export const transaction = model('Transaction', transactionSchema);
