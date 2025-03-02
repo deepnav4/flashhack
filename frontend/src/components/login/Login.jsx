@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import logo from '../../assets/images/logo.svg'; // Adjust path as needed
 
 const Login = () => {
@@ -7,11 +7,45 @@ const Login = () => {
     email: '',
     password: '',
   });
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add your login logic here
-    console.log('Login attempt:', formData);
+    setError('');
+    
+    try {
+      // Hash the password (in a real app, use a proper hashing library)
+      const passwordHash = btoa(formData.password); // Basic encoding, not secure for production
+      
+      const response = await fetch('http://localhost:3000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          passwordHash,
+        }),
+        credentials: 'include', // Important for cookies
+      });
+
+      if (!response.ok) {
+        throw new Error('Invalid credentials');
+      }
+
+      const data = await response.json();
+      
+      // Store session data if needed
+      localStorage.setItem('sessionId', data.sessionId);
+      
+      // Redirect to dashboard
+      navigate('/dashboard');
+      
+    } catch (err) {
+      setError('Invalid email or password');
+      console.error('Login error:', err);
+    }
   };
 
   return (
@@ -29,6 +63,12 @@ const Login = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {error && (
+            <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded relative" role="alert">
+              {error}
+            </div>
+          )}
+          
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">

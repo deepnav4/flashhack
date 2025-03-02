@@ -1,12 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ExpenseForm from './ExpenseForm';
 
 const ExpenseList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [expenses] = useState([
-    { id: 1, date: '2024-03-15', category: 'Food', amount: 50, description: 'Groceries' },
-    { id: 2, date: '2024-03-16', category: 'Transport', amount: 30, description: 'Fuel' }
-  ]);
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchExpenses = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/fetchTransaction/all');
+        console.log(response);
+        if (!response.ok) {
+          throw new Error('Failed to fetch expenses');
+        }
+        setExpenses(response.body);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExpenses();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center p-4">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-600 text-center p-4">Error: {error}</div>;
+  }
 
   return (
     <div className="bg-white rounded-lg shadow p-6">

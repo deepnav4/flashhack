@@ -4,11 +4,15 @@ import * as models from "./models/index.js";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import { v4 as uuid } from "uuid";
-
+import cors from "cors";
 const app = express();
 
 app.use(express.json());
 app.use(cookieParser())
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true
+}));
 
 app.post(apiPath + "/fetchTransaction/all", async (req, res) => {
     const sessionId = req.cookies.sessionId;
@@ -32,7 +36,9 @@ app.post(apiPath + "/fetchTransaction/all", async (req, res) => {
 });
 
 app.post(apiPath + "/addTransaction/", async (req, res) => {
-    const sessionId = req.cookies.sessionId;
+    const sessionId = req.body.sessionId;
+    console.log(req.cookies);
+    console.log(sessionId);
     const userAuth = await models.auth.findOne({
         currentSession: sessionId,
     })
@@ -54,45 +60,51 @@ app.post(apiPath + "/addTransaction/", async (req, res) => {
     if (!user) return res.sendStatus(401);
 
     try {
-        await models.transaction.create({
+        const transaction = new models.transaction({
             amount,
             category,
             date,
             description,
             type,
-            userId: user.id
-        }).save();
+            user: user.id
+        });
+        await transaction.save();
         res.sendStatus(200);
-    } catch {
+    } catch (error) {
+        console.log(error);
         res.sendStatus(500);
     }
 
 })
 
-app.post(apiPath + "/login", async (req, res) => {
-    const {
-        email,
-        passwordHash
-    } = req.body;
+const router = express.Router();
+
+router.post("/login", async (req, res) => {
+    const { email, passwordHash } = req.body;
 
     const userData = await models.user.findOne({
         email,
         passwordHash
-    })
+    });
 
-    if (!userData) res.send(401);
+    if (!userData) return res.sendStatus(401);
 
     const sessionId = uuid();
 
-    res.cookie("sessionId", sessionId, {
-        expires: Date.now() + 1000 * 60 * 60 * 24 * 60
-    })
-    res.json({
-        sessionId
-    })
-})
+    await models.auth.findOneAndUpdate(
+        { email },
+        { currentSession: sessionId },
+        { upsert: true }
+    );
 
-app.post(apiPath + "/signup", async (req, res) => {
+    res.cookie("sessionId", sessionId, {
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 60)
+    });
+
+    res.status(200).json({ sessionId });
+});
+
+router.post("/signup", async (req, res) => {
     const {
         email,
         passwordHash,
@@ -105,19 +117,19 @@ app.post(apiPath + "/signup", async (req, res) => {
     });
 
     const sessionId = uuid();
-    res.cookie("sessionId", sessionId, {
-        expires: Date.now() + 1000 * 60 * 60 * 24 * 60
-    })
+    res.cookie("sessionId", sessionId)
 
     if (userData) return res.sendStatus(409);
 
-    models.user.create({
+    const user = new models.user({
         email,
         meta: {
             username,
             profilePicture
         }
-    }).save();
+    });
+
+    await user.save();
 
     models.auth.create({
         email,
@@ -128,7 +140,9 @@ app.post(apiPath + "/signup", async (req, res) => {
     res.json({
         email, username, profilePicture, sessionId
     })
-})
+});
+
+app.use(router);
 
 async function startBackend({
     apiPort,
@@ -149,3 +163,5 @@ startBackend({
     apiPort,
     dbURL: db.url
 })
+
+export default router;

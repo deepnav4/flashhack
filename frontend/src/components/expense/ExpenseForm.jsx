@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 
-const ExpenseForm = ({ onHide }) => {
+const ExpenseForm = ({ onHide, onExpenseAdded }) => {
   const [formData, setFormData] = useState({
     date: '',
     category: '',
     amount: '',
     description: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   const categories = [
     { label: 'Food', value: 'food' },
@@ -15,14 +17,46 @@ const ExpenseForm = ({ onHide }) => {
     { label: 'Entertainment', value: 'entertainment' }
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    onHide();
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      formData.type = "debit";
+      formData.amount = parseFloat(formData.amount);
+      formData.description = formData.description || "No description";
+      formData.date = new Date(formData.date).toISOString();
+      formData.sessionId = localStorage.getItem('sessionId');
+      const response = await fetch('http://localhost:3000/api/addTransaction', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add expense');
+      }
+
+      // const newExpense = await response();
+      // onExpenseAdded?.(newExpense);
+      // onHide();
+    } catch (err) {
+      console.log(err);
+      setError('Failed to add expense. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {error && (
+        <div className="text-red-600 text-sm">{error}</div>
+      )}
+      
       <div>
         <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">
           Date
@@ -90,15 +124,17 @@ const ExpenseForm = ({ onHide }) => {
         <button
           type="button"
           onClick={onHide}
-          className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-500 focus:outline-none"
+          disabled={isSubmitting}
+          className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-500 focus:outline-none disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          disabled={isSubmitting}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
         >
-          Save
+          {isSubmitting ? 'Saving...' : 'Save'}
         </button>
       </div>
     </form>
