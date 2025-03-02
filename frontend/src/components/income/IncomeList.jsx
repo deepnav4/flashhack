@@ -3,10 +3,21 @@ import IncomeForm from './IncomeForm';
 
 const IncomeList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [incomes] = useState([
+  const [incomes, setIncomes] = useState([
     { id: 1, date: '2024-03-15', category: 'Salary', amount: 5000, description: 'Monthly salary' },
     { id: 2, date: '2024-03-16', category: 'Freelance', amount: 1000, description: 'Project payment' }
   ]);
+
+  const handleAddIncome = (newIncome) => {
+    // Generate a temporary ID (in a real app, this would come from the backend)
+    const incomeWithId = {
+      ...newIncome,
+      id: Date.now(),
+      amount: parseFloat(newIncome.amount)
+    };
+    setIncomes([...incomes, incomeWithId]);
+    setIsModalOpen(false);
+  };
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -73,7 +84,7 @@ const IncomeList = () => {
                     </svg>
                   </button>
                 </div>
-                <IncomeForm onHide={() => setIsModalOpen(false)} />
+                <IncomeForm onHide={() => setIsModalOpen(false)} onSubmit={handleAddIncome} />
               </div>
             </div>
           </div>

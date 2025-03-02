@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const IncomeForm = ({ onHide }) => {
+const IncomeForm = ({ onHide, onSubmit }) => {
   const [formData, setFormData] = useState({
     date: '',
     category: '',
@@ -17,7 +17,23 @@ const IncomeForm = ({ onHide }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission
+    
+    // Validate form data
+    if (!formData.date || !formData.category || !formData.amount) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    // Submit the form data
+    onSubmit(formData);
+    
+    // Reset form and close modal
+    setFormData({
+      date: '',
+      category: '',
+      amount: '',
+      description: ''
+    });
     onHide();
   };
 
